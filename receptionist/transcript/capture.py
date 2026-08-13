@@ -6,7 +6,11 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
-from receptionist.transcript.metadata import CallMetadata
+from receptionist.transcript.metadata import (
+    LATENCY_TARGET_MS,
+    CallMetadata,
+    LatencyTurnRecord,
+)
 
 logger = logging.getLogger("receptionist")
 _MAX_SEGMENTS = 5000
@@ -75,8 +79,50 @@ class TranscriptCapture:
                 created_at=event.created_at,
             ))
             self._trim_segments()
+            self._capture_latency(item, event.created_at)
         except Exception:
             logger.exception("TranscriptCapture: error handling conversation_item_added")
+
+    def _capture_latency(self, item: Any, created_at: float) -> None:
+        """Persist LiveKit's per-turn MetricsReport without transcript content."""
+        report = getattr(item, "metrics", None)
+        if not isinstance(report, dict):
+            return
+        e2e_seconds = report.get("e2e_latency")
+        if not isinstance(e2e_seconds, (int, float)):
+            return
+
+        def milliseconds(key: str) -> float | None:
+            value = report.get(key)
+            if not isinstance(value, (int, float)):
+                return None
+            return float(value) * 1000
+
+        request_ids = report.get("provider_request_ids", [])
+        if not isinstance(request_ids, list):
+            request_ids = []
+        record = LatencyTurnRecord(
+            timestamp=float(created_at),
+            e2e_ms=float(e2e_seconds) * 1000,
+            end_of_turn_ms=milliseconds("end_of_turn_delay"),
+            llm_ttft_ms=milliseconds("llm_node_ttft"),
+            playback_ms=milliseconds("playback_latency"),
+            provider_request_ids=[str(value) for value in request_ids],
+        )
+        self.metadata.latency_turns.append(record)
+        logger.info(
+            "Assistant turn latency %.1f ms (target <= %d ms, met=%s)",
+            record.e2e_ms,
+            LATENCY_TARGET_MS,
+            record.e2e_ms <= LATENCY_TARGET_MS,
+            extra={
+                "call_id": self.metadata.call_id,
+                "component": "transcript.latency",
+                "e2e_latency_ms": round(record.e2e_ms, 1),
+                "latency_target_ms": LATENCY_TARGET_MS,
+                "latency_target_met": record.e2e_ms <= LATENCY_TARGET_MS,
+            },
+        )
 
     def _on_tools_executed(self, event: Any) -> None:
         try:

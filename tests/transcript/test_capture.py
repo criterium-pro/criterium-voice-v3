@@ -69,6 +69,41 @@ def test_capture_records_assistant_messages():
     assert capture.segments[0].text == "Sure, I can help."
 
 
+def test_capture_records_livekit_per_turn_latency():
+    emitter = FakeEmitter()
+    md = CallMetadata(call_id="room-1", business_name="Acme")
+    capture = TranscriptCapture(emitter, md)
+
+    item = MagicMock(
+        role="assistant",
+        text_content="Claro, le ayudo.",
+        metrics={
+            "e2e_latency": 0.438,
+            "end_of_turn_delay": 0.102,
+            "llm_node_ttft": 0.281,
+            "playback_latency": 0.003,
+            "provider_request_ids": ["resp_123"],
+        },
+    )
+    emitter.emit("conversation_item_added", MagicMock(item=item, created_at=101.0))
+
+    assert len(md.latency_turns) == 1
+    assert md.latency_turns[0].e2e_ms == 438.0
+    assert md.latency_turns[0].provider_request_ids == ["resp_123"]
+    assert md.to_dict()["latency"]["summary"]["under_target_percent"] == 100.0
+
+
+def test_capture_skips_assistant_turn_without_numeric_latency():
+    emitter = FakeEmitter()
+    md = CallMetadata(call_id="room-1", business_name="Acme")
+    capture = TranscriptCapture(emitter, md)
+
+    item = MagicMock(role="assistant", text_content="Hola", metrics={})
+    emitter.emit("conversation_item_added", MagicMock(item=item, created_at=101.0))
+
+    assert md.latency_turns == []
+
+
 def test_capture_records_tool_calls():
     emitter = FakeEmitter()
     md = CallMetadata(call_id="room-1", business_name="Acme")

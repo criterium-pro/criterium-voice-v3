@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   using `gpt-realtime-2.1`, low reasoning, OpenAI `shimmer` and semantic VAD.
 - Configurable OpenAI Realtime turn detection under `voice.turn_detection`,
   supporting semantic VAD eagerness and server-VAD silence parameters.
+- Per-turn LiveKit end-to-end latency persisted in every call artifact, including
+  p50, p95, maximum and the share of measured turns meeting the 500 ms target.
 
 ### Changed
 - Greeting generation now requests the configured greeting verbatim exactly once

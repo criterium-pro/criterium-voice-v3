@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 import logging
+import math
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
 logger = logging.getLogger("receptionist")
+LATENCY_TARGET_MS = 500
 
 
 # Valid outcome labels. Membership-checked in lifecycle._add_outcome to prevent
@@ -79,6 +81,60 @@ class DtmfEventRecord:
 
 
 @dataclass
+class LatencyTurnRecord:
+    """Provider-backed latency measurements for one assistant turn."""
+
+    timestamp: float
+    e2e_ms: float
+    end_of_turn_ms: float | None = None
+    llm_ttft_ms: float | None = None
+    playback_ms: float | None = None
+    provider_request_ids: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return {
+            "timestamp": self.timestamp,
+            "e2e_ms": round(self.e2e_ms, 1),
+            "end_of_turn_ms": _round_optional(self.end_of_turn_ms),
+            "llm_ttft_ms": _round_optional(self.llm_ttft_ms),
+            "playback_ms": _round_optional(self.playback_ms),
+            "under_500ms": self.e2e_ms <= LATENCY_TARGET_MS,
+            "provider_request_ids": list(self.provider_request_ids),
+        }
+
+
+def _round_optional(value: float | None) -> float | None:
+    return round(value, 1) if value is not None else None
+
+
+def _latency_summary(turns: list[LatencyTurnRecord]) -> dict:
+    values = sorted(turn.e2e_ms for turn in turns)
+    if not values:
+        return {
+            "target_ms": LATENCY_TARGET_MS,
+            "measured_turns": 0,
+            "p50_ms": None,
+            "p95_ms": None,
+            "max_ms": None,
+            "under_target_percent": None,
+        }
+
+    def percentile_nearest_rank(percentile: float) -> float:
+        index = max(0, math.ceil(percentile * len(values)) - 1)
+        return values[index]
+
+    under_target = sum(value <= LATENCY_TARGET_MS for value in values)
+    return {
+        "target_ms": LATENCY_TARGET_MS,
+        "measured_turns": len(values),
+        "p50_ms": round(percentile_nearest_rank(0.50), 1),
+        "p95_ms": round(percentile_nearest_rank(0.95), 1),
+        "max_ms": round(values[-1], 1),
+        "under_target_percent": round(100 * under_target / len(values), 1),
+    }
+
+
+@dataclass
 class CallMetadata:
     call_id: str
     business_name: str
@@ -103,6 +159,7 @@ class CallMetadata:
     agent_end_reason: str | None = None
     info_packet_sends: list[InfoPacketSendRecord] = field(default_factory=list)
     dtmf_events: list[DtmfEventRecord] = field(default_factory=list)
+    latency_turns: list[LatencyTurnRecord] = field(default_factory=list)
 
     def __post_init__(self):
         if not self.start_ts:
@@ -147,4 +204,8 @@ class CallMetadata:
                 record.to_dict() for record in self.info_packet_sends
             ],
             "dtmf_events": [record.to_dict() for record in self.dtmf_events],
+            "latency": {
+                "summary": _latency_summary(self.latency_turns),
+                "turns": [record.to_dict() for record in self.latency_turns],
+            },
         }
