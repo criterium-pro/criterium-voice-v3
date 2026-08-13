@@ -371,6 +371,26 @@ def _tool_display_names(tools) -> list[str]:
     return names
 
 
+def _filter_enabled_tools(tools, enabled_tools: list[str] | None):
+    """Return only the tools explicitly enabled for a focused tenant.
+
+    The upstream Receptionist class exposes every decorated tool, even when a
+    tenant has no calendar, intake or information-packet configuration.  A
+    tenant allow-list avoids invalid tool calls and removes their schemas from
+    every Realtime request.  ``None`` preserves upstream behavior.
+    """
+    tools = list(tools)
+    if enabled_tools is None:
+        return tools
+    by_name = dict(zip(_tool_display_names(tools), tools, strict=False))
+    missing = [name for name in enabled_tools if name not in by_name]
+    if missing:
+        raise RuntimeError(
+            "Configured agent.enabled_tools are unavailable: " + ", ".join(missing)
+        )
+    return [by_name[name] for name in enabled_tools]
+
+
 def _agent_generation_matches_file() -> bool:
     expected = os.environ.get("RECEPTIONIST_AGENT_GENERATION")
     generation_file = os.environ.get("RECEPTIONIST_AGENT_GENERATION_FILE")
@@ -1299,6 +1319,8 @@ def _feed_capture_digit(state: _DtmfHandlerState, digit: str) -> None:
 class Receptionist(Agent):
     def __init__(self, config: BusinessConfig, lifecycle: CallLifecycle) -> None:
         super().__init__(instructions=build_system_prompt(config))
+        self._tools = _filter_enabled_tools(self._tools, config.agent.enabled_tools)
+        self._chat_ctx = self._chat_ctx.copy(tools=self._tools)
         self.config = config
         self.lifecycle = lifecycle
         # Session-scoped cache of slot ISO strings offered to the caller via

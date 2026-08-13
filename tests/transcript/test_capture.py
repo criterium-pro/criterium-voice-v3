@@ -1,6 +1,7 @@
 # tests/transcript/test_capture.py
 from __future__ import annotations
 
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 from receptionist.transcript.capture import (
@@ -91,6 +92,32 @@ def test_capture_records_livekit_per_turn_latency():
     assert md.latency_turns[0].e2e_ms == 438.0
     assert md.latency_turns[0].provider_request_ids == ["resp_123"]
     assert md.to_dict()["latency"]["summary"]["under_target_percent"] == 100.0
+
+
+def test_capture_records_realtime_audio_transcript_and_latency():
+    """Realtime audio stores text on AudioContent.transcript, not text_content."""
+    emitter = FakeEmitter()
+    md = CallMetadata(call_id="room-1", business_name="Acme")
+    capture = TranscriptCapture(emitter, md)
+
+    item = SimpleNamespace(
+        role="assistant",
+        text_content=None,
+        text=None,
+        content=[SimpleNamespace(transcript="Buenas noches. Cuénteme.")],
+        metrics={
+            "e2e_latency": 0.912,
+            "end_of_turn_delay": 0.301,
+            "llm_node_ttft": 0.507,
+            "playback_latency": 0.004,
+            "provider_request_ids": ["resp_realtime"],
+        },
+    )
+    emitter.emit("conversation_item_added", SimpleNamespace(item=item, created_at=101.0))
+
+    assert capture.segments[0].text == "Buenas noches. Cuénteme."
+    assert md.latency_turns[0].e2e_ms == 912.0
+    assert md.latency_turns[0].end_of_turn_ms == 301.0
 
 
 def test_capture_skips_assistant_turn_without_numeric_latency():

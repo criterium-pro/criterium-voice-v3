@@ -9,10 +9,12 @@ voice:
   auth:
     type: "api_key"
   reasoning_effort: "low"
-  max_response_output_tokens: 220
+  max_response_output_tokens: 480
   turn_detection:
-    type: "semantic_vad"
-    eagerness: "high"
+    type: "server_vad"
+    threshold: 0.65
+    prefix_padding_ms: 200
+    silence_duration_ms: 300
   idle:
     away_seconds: 15
     silence_grace_seconds: 30
@@ -23,7 +25,7 @@ languages:
   primary: "es"
   allowed: ["es"]
 
-greeting: "Gracias por llamar a InnoTec Food Equipment. Soy la asistente virtual de InnoTec. ¿En qué puedo ayudarle?"
+greeting: "InnoTec Food Equipment. Soy la asistente virtual. ¿En qué puedo ayudarle?"
 
 personality: |
   Eres la asesora comercial de InnoTec Food Equipment. Hablas siempre en español
@@ -110,3 +112,12 @@ retention:
 
 sip:
   transfer_uri_template: "tel:{number}"
+
+agent:
+  prompt_mode: "compact"
+  enabled_tools:
+    - lookup_faq
+    - get_business_hours
+    - take_message
+    - transfer_call
+    - end_call

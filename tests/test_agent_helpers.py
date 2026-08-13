@@ -11,6 +11,7 @@ from livekit import rtc
 
 from receptionist.agent import (
     _capture_caller_phone_from_participant,
+    _filter_enabled_tools,
     _get_caller_identity,
     _get_caller_phone,
     _get_sip_participant_phone,
@@ -21,6 +22,18 @@ from receptionist.agent import (
 )
 import receptionist.agent as agent_module
 from receptionist.lifecycle import CallLifecycle
+
+
+def test_filter_enabled_tools_preserves_explicit_order():
+    tools = [SimpleNamespace(id=name) for name in ["alpha", "beta", "gamma"]]
+    filtered = _filter_enabled_tools(tools, ["gamma", "alpha"])
+    assert [tool.id for tool in filtered] == ["gamma", "alpha"]
+
+
+def test_filter_enabled_tools_rejects_unknown_tool():
+    tools = [SimpleNamespace(id="lookup_faq")]
+    with pytest.raises(RuntimeError, match="unavailable: transfer_call"):
+        _filter_enabled_tools(tools, ["lookup_faq", "transfer_call"])
 
 
 @pytest.fixture

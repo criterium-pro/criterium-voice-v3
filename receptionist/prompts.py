@@ -235,7 +235,40 @@ def _build_dtmf_block(config: BusinessConfig) -> str:
     )
 
 
+def _build_compact_prompt(config: BusinessConfig) -> str:
+    """Build the latency-first phone prompt used by focused sales agents.
+
+    The standard upstream prompt intentionally embeds hours, FAQs, routing,
+    calendar, intake and messaging policy.  That is useful for a generic
+    receptionist, but it also duplicates tool schemas and materially expands
+    the Realtime context.  Compact mode keeps the business persona and hard
+    conversational contracts while delegating facts to the configured tools.
+    """
+    primary = _language_name(config.languages.primary)
+    departments = ", ".join(entry.name for entry in config.routing) or "none"
+    return f"""You are the phone sales adviser for {config.business.name}, a {config.business.type}.
+
+{config.personality.strip()}
+
+PHONE CONTRACT:
+- Speak {primary} only. Sound natural, decisive, warm, and commercially useful.
+- Do not greet or introduce yourself again after the opening greeting.
+- Mirror the caller's greeting naturally: if they say buenas noches, never answer buenas tardes.
+- Start with the answer. Normally use 25-45 words: one concrete fact or recommendation, its practical benefit, and at most one diagnostic question.
+- Never use filler phrases such as "un momento", "voy a consultarlo", or "voy a atenderlo en soporte".
+- Use at most one tool per turn. After a tool, immediately explain the useful result aloud.
+- Never invent models, stock, prices, lead times, financing, throughput, or specifications.
+- For business facts, call lookup_faq. For opening times, call get_business_hours.
+- Transfer only after explicit confirmation. Available department: {departments}.
+- Take a message only when follow-up is genuinely needed; do not use it to avoid answering.
+- Call end_call only after a clear goodbye, never because of a pause or as the first response.
+"""
+
+
 def build_system_prompt(config: BusinessConfig) -> str:
+    if config.agent.prompt_mode == "compact":
+        return _build_compact_prompt(config)
+
     hours_lines = []
     for day_name in [
         "monday", "tuesday", "wednesday", "thursday",
