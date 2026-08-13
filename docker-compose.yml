@@ -1,0 +1,39 @@
+name: criterium-voice-v3
+
+services:
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: criterium-voice-v3:${V3_IMAGE_TAG:-local}
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 15m
+    env_file:
+      - .env
+    environment:
+      RECEPTIONIST_AGENT_NAME: innotec-v3
+      RECEPTIONIST_CONFIG: example-innotec-es
+    volumes:
+      - ./runtime/messages:/app/messages
+      - ./runtime/transcripts:/app/transcripts
+      - ./runtime/recordings:/app/recordings
+    mem_limit: 1536m
+    cpus: 1.25
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8081/', timeout=3)"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
+    networks:
+      - v3
+
+networks:
+  v3:
+    name: criterium-voice-v3
+    driver: bridge

@@ -11,6 +11,12 @@
 
 # AI Receptionist -- Open Source, Self-Hosted, No Compromises
 
+> **Criterium Voice V3 comparison fork.** This fork remains explicitly based
+> on [`kirklandsig/AIReceptionist`](https://github.com/kirklandsig/AIReceptionist)
+> and preserves its AGPL-3.0 license. The InnoTec lane adds an isolated Docker
+> deployment and Spanish-only OpenAI Realtime configuration for direct
+> comparison with Criterium Voice V1 and V2.
+
 A production-grade, open-source AI receptionist that answers your business phone calls using OpenAI's Realtime API -- the same speech-to-speech model that powers ChatGPT Advanced Voice. Self-hosted. No vendor lock-in. No monthly SaaS fees bleeding you dry.
 
 **This is not another cascaded STT-to-LLM-to-TTS hack.** This is a direct speech-to-speech AI voice agent built on the highest-fidelity model available today, connected to your phone system via LiveKit and SIP. It sounds like a real person because it uses the same model that makes ChatGPT's voice mode sound like a real person.

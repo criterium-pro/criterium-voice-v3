@@ -62,6 +62,8 @@ async def test_on_enter_speaks_preamble_before_greeting(v2_yaml, tmp_path, patch
     assert len(calls) == 2
     assert "recorded for quality purposes" in calls[0]
     assert config.greeting in calls[1]
+    assert "verbatim, once" in calls[1]
+    assert "Do not add a second greeting" in calls[1]
 
 
 @pytest.mark.asyncio

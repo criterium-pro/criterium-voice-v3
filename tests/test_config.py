@@ -89,6 +89,23 @@ def test_example_workers_comp_config_loads_with_resend_env(monkeypatch):
     assert "nycomplaw" not in raw_yaml.lower()
 
 
+def test_example_innotec_es_config_loads_as_spanish_realtime_v3():
+    config = load_config(Path("config/businesses/example-innotec-es.yaml"))
+    assert config.business.name == "InnoTec Food Equipment"
+    assert config.languages.primary == "es"
+    assert config.languages.allowed == ["es"]
+    assert config.voice.voice_id == "shimmer"
+    assert config.voice.model == "gpt-realtime-2.1"
+    assert config.voice.reasoning_effort == "low"
+    assert config.voice.turn_detection is not None
+    assert config.voice.turn_detection.type == "semantic_vad"
+    assert config.voice.turn_detection.eagerness == "high"
+    assert config.recording is not None
+    assert config.recording.enabled is False
+    assert config.transcripts is not None
+    assert config.transcripts.enabled is True
+
+
 def test_hours_closed_day():
     config = BusinessConfig.from_yaml_string(EXAMPLE_YAML)
     assert config.hours.wednesday is None
@@ -287,6 +304,33 @@ def test_voice_reasoning_and_token_cap_default_off(v2_yaml):
     config = BusinessConfig.from_yaml_string(v2_yaml)
     assert config.voice.reasoning_effort is None
     assert config.voice.max_response_output_tokens is None
+    assert config.voice.turn_detection is None
+
+
+def test_voice_semantic_turn_detection_parses(v2_yaml):
+    yaml_text = v2_yaml.replace(
+        '  model: "gpt-realtime"',
+        '  model: "gpt-realtime-2.1"\n'
+        '  turn_detection:\n'
+        '    type: "semantic_vad"\n'
+        '    eagerness: "high"',
+    )
+    config = BusinessConfig.from_yaml_string(yaml_text)
+    assert config.voice.turn_detection is not None
+    assert config.voice.turn_detection.type == "semantic_vad"
+    assert config.voice.turn_detection.eagerness == "high"
+
+
+def test_voice_server_turn_detection_validates_threshold(v2_yaml):
+    yaml_text = v2_yaml.replace(
+        '  model: "gpt-realtime"',
+        '  model: "gpt-realtime"\n'
+        '  turn_detection:\n'
+        '    type: "server_vad"\n'
+        '    threshold: 1.2',
+    )
+    with pytest.raises(ValueError, match="threshold"):
+        BusinessConfig.from_yaml_string(yaml_text)
 
 
 def test_voice_reasoning_effort_parses(v2_yaml):

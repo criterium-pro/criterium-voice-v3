@@ -754,6 +754,37 @@ def test_realtime_kwargs_includes_reasoning_when_set():
     assert kwargs["reasoning"].effort == "low"
 
 
+def test_realtime_kwargs_includes_semantic_vad_when_set():
+    voice = VoiceConfig.model_validate({
+        "voice_id": "shimmer",
+        "model": "gpt-realtime-2.1",
+        "turn_detection": {"type": "semantic_vad", "eagerness": "high"},
+    })
+    kwargs = _build_realtime_model_kwargs(voice, api_key="sk-test")
+    assert kwargs["turn_detection"].type == "semantic_vad"
+    assert kwargs["turn_detection"].eagerness == "high"
+    assert kwargs["turn_detection"].create_response is True
+    assert kwargs["turn_detection"].interrupt_response is True
+
+
+def test_realtime_kwargs_includes_server_vad_when_set():
+    voice = VoiceConfig.model_validate({
+        "voice_id": "shimmer",
+        "model": "gpt-realtime-2.1",
+        "turn_detection": {
+            "type": "server_vad",
+            "threshold": 0.6,
+            "prefix_padding_ms": 240,
+            "silence_duration_ms": 280,
+        },
+    })
+    kwargs = _build_realtime_model_kwargs(voice, api_key="sk-test")
+    assert kwargs["turn_detection"].type == "server_vad"
+    assert kwargs["turn_detection"].threshold == 0.6
+    assert kwargs["turn_detection"].prefix_padding_ms == 240
+    assert kwargs["turn_detection"].silence_duration_ms == 280
+
+
 class _FakeRealtimeModelWithUpdate:
     """Stand-in whose update_options accepts max_response_output_tokens."""
 

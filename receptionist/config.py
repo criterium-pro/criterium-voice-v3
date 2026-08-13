@@ -152,6 +152,22 @@ class VoiceIdleConfig(BaseModel):
     spoken reply."""
 
 
+class VoiceTurnDetectionConfig(BaseModel):
+    """OpenAI Realtime end-of-turn detection.
+
+    Semantic VAD is the preferred low-latency conversational mode. Server VAD
+    remains available for deterministic silence-based experiments.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["semantic_vad", "server_vad"] = "semantic_vad"
+    eagerness: Literal["low", "medium", "high", "auto"] = "auto"
+    threshold: float = Field(default=0.5, ge=0, le=1)
+    prefix_padding_ms: int = Field(default=300, ge=0)
+    silence_duration_ms: int = Field(default=500, gt=0)
+
+
 class VoiceConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -159,6 +175,7 @@ class VoiceConfig(BaseModel):
     model: str = "gpt-realtime"
     auth: VoiceAuth | None = None
     idle: VoiceIdleConfig = Field(default_factory=VoiceIdleConfig)
+    turn_detection: VoiceTurnDetectionConfig | None = None
     # Reasoning effort for reasoning-capable Realtime models (e.g.
     # gpt-realtime-2). None leaves the model's default. OpenAI recommends
     # "low" for production voice latency. Only applied when the installed
@@ -1080,5 +1097,3 @@ def _interpolate_env_vars(node):
 def load_config(path: Path | str) -> BusinessConfig:
     text = Path(path).read_text(encoding="utf-8")
     return BusinessConfig.from_yaml_string(text)
-
-

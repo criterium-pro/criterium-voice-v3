@@ -11,7 +11,7 @@ Traditional IVR systems frustrate callers with rigid menus. Human receptionists 
 - **Natural conversation** — powered by OpenAI's speech-to-speech Realtime API, callers interact with a human-sounding voice, not a robotic menu.
 - **Config-driven** — every aspect of the receptionist's behavior (greeting, personality, hours, FAQs, routing) is defined in a single YAML file. No code changes needed.
 - **Multi-business** — run one deployment that serves multiple businesses, each with its own configuration and phone number.
-- **Open-source** — MIT-licensed, extensible, and built on well-supported foundations (LiveKit, OpenAI, Pydantic).
+- **Open-source** — AGPL-3.0-licensed, extensible, and built on well-supported foundations (LiveKit, OpenAI, Pydantic).
 
 ---
 

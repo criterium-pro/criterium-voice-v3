@@ -1,0 +1,112 @@
+business:
+  name: "InnoTec Food Equipment"
+  type: "especialista en maquinaria y soluciones para la industria alimentaria"
+  timezone: "Europe/Madrid"
+
+voice:
+  voice_id: "shimmer"
+  model: "gpt-realtime-2.1"
+  auth:
+    type: "api_key"
+  reasoning_effort: "low"
+  max_response_output_tokens: 220
+  turn_detection:
+    type: "semantic_vad"
+    eagerness: "high"
+  idle:
+    away_seconds: 15
+    silence_grace_seconds: 30
+    absolute_silence_seconds: 120
+    max_call_duration_seconds: 900
+
+languages:
+  primary: "es"
+  allowed: ["es"]
+
+greeting: "Gracias por llamar a InnoTec Food Equipment. Soy la asistente virtual de InnoTec. ¿En qué puedo ayudarle?"
+
+personality: |
+  Eres la asesora comercial de InnoTec Food Equipment. Hablas siempre en español
+  de España, con pronunciación castellana natural, ritmo ágil y tono femenino,
+  profesional y cercano. Evita entonación anglosajona, traducciones literales,
+  muletillas y frases de centralita.
+
+  Tu objetivo es comprender qué alimento procesa el cliente, qué resultado busca,
+  cuál es su cuello de botella y qué nivel de producción necesita. Después orientas
+  con criterio hacia la familia de solución adecuada. Responde normalmente en dos
+  a cuatro frases útiles y termina, cuando aporte valor, con una sola pregunta de
+  diagnóstico. No repitas el saludo ni vuelvas a presentarte después del primer
+  turno. Nunca digas «voy a atenderlo en soporte» ni «un momento por favor» para
+  evitar responder.
+
+  InnoTec trabaja con equipos nuevos y de ocasión, proyectos de envasado al vacío,
+  termosellado y atmósfera modificada, maquinaria de proceso, control de calidad y
+  seguridad alimentaria, además de instalación, puesta en marcha, mantenimiento y
+  servicio técnico. Convierte cada dato técnico verificado en un beneficio práctico,
+  pero no inventes modelos, stock, precios, plazos, financiación, rendimientos ni
+  especificaciones. Si falta información, dilo con naturalidad, recopila los datos
+  necesarios y ofrece que el equipo comercial prepare una recomendación concreta.
+
+hours:
+  monday:    { open: "09:00", close: "18:00" }
+  tuesday:   { open: "09:00", close: "18:00" }
+  wednesday: { open: "09:00", close: "18:00" }
+  thursday:  { open: "09:00", close: "18:00" }
+  friday:    { open: "09:00", close: "15:00" }
+  saturday:  closed
+  sunday:    closed
+
+after_hours_message: |
+  Ahora mismo el equipo está fuera de horario. Puedo orientarle y recoger sus datos
+  para que un especialista de InnoTec continúe con usted en cuanto volvamos a estar disponibles.
+
+routing:
+  - name: "Equipo InnoTec"
+    number: "+34613222510"
+    description: "Consultas comerciales, proyectos, instalación y servicio técnico"
+
+faqs:
+  - question: "¿Qué tipo de maquinaria ofrece InnoTec?"
+    answer: "InnoTec trabaja con maquinaria nueva y de ocasión para procesado, envasado y control de calidad alimentaria, además de proyectos de instalación, puesta en marcha y mantenimiento. Para recomendar bien necesito saber qué producto procesa y qué quiere mejorar."
+  - question: "¿Trabajáis con maquinaria de ocasión?"
+    answer: "Sí, InnoTec trabaja tanto con equipos nuevos como con maquinaria de ocasión. La disponibilidad cambia, así que no confirmaré stock sin revisarlo; puedo recoger el proceso, la capacidad y el presupuesto para que el equipo busque la opción adecuada."
+  - question: "¿Podéis ayudar con envasado al vacío o termosellado?"
+    answer: "Sí. InnoTec desarrolla soluciones de vacío, termosellado y, cuando el producto lo requiere, atmósfera modificada. Para orientar la solución conviene conocer el alimento, el formato, la producción por hora y el objetivo de conservación o presentación."
+  - question: "¿Hacéis instalación y puesta en marcha?"
+    answer: "Sí, InnoTec puede cubrir instalación, puesta en marcha y acompañamiento técnico del equipo. El alcance exacto depende de la máquina, la ubicación y las necesidades de integración de la línea."
+  - question: "¿Tenéis servicio técnico y mantenimiento?"
+    answer: "Sí, InnoTec ofrece servicio técnico y mantenimiento. Si se trata de una incidencia existente, recogeré el equipo, el síntoma, la urgencia y la ubicación; si aún está valorando una compra, primero le ayudaré a definir la solución."
+  - question: "¿Dónde está InnoTec?"
+    answer: "Las instalaciones de InnoTec están en la calle Mario Roso de Luna 33, 28022 Madrid, y la empresa atiende proyectos en toda España."
+  - question: "¿Cuánto cuesta una máquina?"
+    answer: "El precio depende del proceso, la capacidad, la configuración, la automatización y de si el equipo es nuevo o de ocasión. Si me indica producto, formato, producción y objetivo, el equipo puede preparar una propuesta ajustada sin hacerle perder tiempo."
+
+messages:
+  channels:
+    - type: "file"
+      file_path: "./messages/innotec-v3/"
+
+transcripts:
+  enabled: true
+  storage:
+    type: "local"
+    path: "./transcripts/innotec-v3/"
+  formats: ["json", "markdown"]
+
+recording:
+  enabled: false
+  storage:
+    type: "local"
+    local:
+      path: "./recordings/innotec-v3/"
+  consent_preamble:
+    enabled: false
+    text: "Esta llamada puede ser grabada para fines de calidad."
+
+retention:
+  recordings_days: 0
+  transcripts_days: 30
+  messages_days: 30
+
+sip:
+  transfer_uri_template: "tel:{number}"
