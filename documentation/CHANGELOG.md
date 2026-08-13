@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Criterium's isolated InnoTec Spanish comparison lane: production Docker image,
+  resource-bounded Compose service and a Spanish-only InnoTec business template
+  using `gpt-realtime-2.1`, low reasoning, OpenAI `shimmer` and semantic VAD.
+- Configurable OpenAI Realtime turn detection under `voice.turn_detection`,
+  supporting semantic VAD eagerness and server-VAD silence parameters.
+
+### Changed
+- Greeting generation now requests the configured greeting verbatim exactly once
+  and explicitly forbids an added second greeting or identity line.
+- Corrected the documentation license label from MIT to the repository's actual
+  AGPL-3.0 license.
+
 ### Changed
 - Agent-initiated call endings (goodbye / silence / max-duration / unproductive
   turns) now drop the SIP caller BEFORE running the call-end fan-out

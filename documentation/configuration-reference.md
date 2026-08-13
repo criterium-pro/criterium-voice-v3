@@ -255,6 +255,7 @@ Voice configuration for the OpenAI Realtime API.
 | `voice_id` | string | No | `"marin"` | The OpenAI voice to use for the receptionist. |
 | `model` | string | No | `"gpt-realtime"` | The OpenAI Realtime (GA) model variant to use. |
 | `auth` | object | No | omitted | Per-business auth source for Realtime. If omitted, the LiveKit OpenAI plugin uses `OPENAI_API_KEY` exactly as before. **GA Realtime requires a standard `sk-` API key**; ChatGPT/Codex OAuth (`oauth_codex`) no longer authenticates Realtime as of the 2026-06-03 beta sunset. |
+| `turn_detection` | object or null | No | `null` | Optional OpenAI Realtime turn detector. Supports semantic VAD (`type: semantic_vad`, `eagerness: low|medium|high|auto`) and silence-based server VAD (`type: server_vad`, plus threshold/padding/silence fields). `null` preserves the SDK/provider default. |
 | `reasoning_effort` | string or null | No | `null` | Reasoning effort for reasoning-capable Realtime models (`gpt-realtime-2`). One of `minimal`, `low`, `medium`, `high`. OpenAI recommends `low` for production voice latency. Leave `null` for non-reasoning models. Only applied when the installed `livekit-plugins-openai` (>= 1.6) exposes the `reasoning` parameter; ignored with a warning otherwise. |
 | `max_response_output_tokens` | int or null | No | `null` | Hard cap on tokens per model response. A finite cap protects against a runaway response exhausting the account's per-minute token rate limit — the cause of mid-call dead air on rate-limited OpenAI tiers. Leave `null` for the model default. |
 
@@ -263,11 +264,12 @@ Voice configuration for the OpenAI Realtime API.
 | Model | Description |
 |-------|-------------|
 | `gpt-realtime` | Recommended GA default; auto-tracks OpenAI's best stable snapshot |
+| `gpt-realtime-2.1` | Current recommended low-latency voice-agent model; supports speech-to-speech and reasoning |
 | `gpt-realtime-2` | Newest / most capable GA snapshot (higher per-minute cost) |
 | `gpt-realtime-mini` | Cheaper, faster, lower-capability tier |
 | `gpt-realtime-1.5` | Older snapshot; was tied to the retired Realtime Beta path |
 
-**Recommendation**: keep the default `gpt-realtime` unless you have a specific reason to pin another variant. Use `gpt-realtime-2` for the newest model at higher cost.
+**Recommendation**: keep `gpt-realtime` when automatic stable tracking is desired. Pin `gpt-realtime-2.1` when benchmarking a known current voice-agent model and record the pin date in deployment documentation.
 
 **Available voices**:
 
@@ -282,14 +284,24 @@ Voice configuration for the OpenAI Realtime API.
 | `shimmer` | Bright, energetic |
 | `verse` | Rich, expressive |
 | `marin` | Natural, approachable (default) |
+| `cedar` | Natural, high-quality built-in voice |
 
 **Recommendation**: `marin` works well with `gpt-realtime`. `ash` is good for warmer, more personal businesses. `sage` suits authoritative contexts like law firms.
 
 ```yaml
 voice:
-  voice_id: "marin"
-  model: "gpt-realtime"
+  voice_id: "shimmer"
+  model: "gpt-realtime-2.1"
+  reasoning_effort: "low"
+  turn_detection:
+    type: "semantic_vad"
+    eagerness: "high"
 ```
+
+OpenAI built-in voice IDs are not locale-specific. The spoken language and
+regional style must therefore be constrained in `languages` and `personality`,
+then evaluated with real calls. A Spanish-only configuration does not by itself
+guarantee a native Spanish accent from every built-in voice.
 
 #### `voice.auth`
 

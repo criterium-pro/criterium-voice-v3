@@ -89,6 +89,30 @@ def _build_realtime_model_kwargs(voice_config, api_key: str | None) -> dict:
                 extra={"component": "agent.realtime"},
             )
 
+    if voice_config.turn_detection is not None and "turn_detection" in supported:
+        from openai.types.realtime.realtime_audio_input_turn_detection import (
+            SemanticVad,
+            ServerVad,
+        )
+
+        turn = voice_config.turn_detection
+        if turn.type == "semantic_vad":
+            kwargs["turn_detection"] = SemanticVad(
+                type="semantic_vad",
+                eagerness=turn.eagerness,
+                create_response=True,
+                interrupt_response=True,
+            )
+        else:
+            kwargs["turn_detection"] = ServerVad(
+                type="server_vad",
+                threshold=turn.threshold,
+                prefix_padding_ms=turn.prefix_padding_ms,
+                silence_duration_ms=turn.silence_duration_ms,
+                create_response=True,
+                interrupt_response=True,
+            )
+
     if (
         voice_config.max_response_output_tokens is not None
         and "max_response_output_tokens" in supported
@@ -1391,7 +1415,7 @@ class Receptionist(Agent):
 
         greeting_text = self.config.greeting
         await self.session.generate_reply(
-            instructions=f"""Greet the caller with:
+            instructions=f"""Say exactly this greeting, verbatim, once. Do not add a second greeting, your name, or any other words:
 {greeting_text}"""
         )
 

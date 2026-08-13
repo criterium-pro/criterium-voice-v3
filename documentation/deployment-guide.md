@@ -1,5 +1,40 @@
 # Deployment Guide
 
+## Isolated InnoTec V3 reference deployment
+
+The Criterium InnoTec V3 deployment intentionally follows this repository's
+native architecture: Telnyx SIP to a dedicated LiveKit Cloud project, then an
+AIReceptionist worker on the VOICE VPS and OpenAI Realtime speech-to-speech.
+It does not share a LiveKit project, SIP trunk, dispatch rule, Docker network,
+container, configuration directory, runtime volume or phone-number assignment
+with Criterium Voice V1 or V2.
+
+The repository includes a production `Dockerfile`, a resource-bounded
+`docker-compose.yml`, and `config/businesses/example-innotec-es.yaml`. Copy the
+example to an operator-local `config/businesses/innotec.yaml` only when the
+deployment needs non-public routing or business data. The tracked example uses
+Spanish-only output, `gpt-realtime-2.1`, low reasoning, semantic VAD at high
+eagerness and the `shimmer` built-in voice for the InnoTec comparison lane.
+Compose pins `RECEPTIONIST_CONFIG=example-innotec-es`, so a room without dispatch
+metadata cannot silently fall back to the first business YAML in the directory.
+
+Use a separate LiveKit Cloud project rather than the existing Criterium project.
+LiveKit itself recommends separate projects/instances for separate environments;
+this prevents a dispatch or credential error in V3 from routing V1 traffic.
+
+```bash
+cp .env.example .env
+# Fill only the dedicated V3 LiveKit project credentials and OpenAI API key.
+docker compose build
+docker compose up -d
+docker compose ps
+docker compose logs --tail 100 agent
+```
+
+The container health endpoint is the LiveKit Agents health server on port 8081
+inside the private Compose network. It is intentionally not published on the
+host.
+
 This guide covers everything needed to deploy AI Receptionist in production: LiveKit setup (Cloud and self-hosted), SIP trunk configuration with Twilio and Telnyx, environment configuration, and production operation considerations.
 
 ---
@@ -65,6 +100,7 @@ Agent dispatch defaults:
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `RECEPTIONIST_AGENT_NAME` | LiveKit agent name registered by `@server.rtc_session`; defaults to `receptionist` when unset | `receptionist` |
+| `RECEPTIONIST_CONFIG` | Business YAML slug used when dispatch metadata omits `config` | `example-innotec-es` |
 
 Required for API-key auth only:
 
