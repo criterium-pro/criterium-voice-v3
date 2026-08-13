@@ -855,6 +855,20 @@ class AgentConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     mode: Literal["receptionist", "intake_only"] = "receptionist"
+    prompt_mode: Literal["standard", "compact"] = "standard"
+    enabled_tools: list[str] | None = None
+
+    @field_validator("enabled_tools")
+    @classmethod
+    def _validate_enabled_tools(cls, value: list[str] | None) -> list[str] | None:
+        if value is None:
+            return None
+        normalized = [name.strip() for name in value]
+        if not normalized or any(not name for name in normalized):
+            raise ValueError("agent.enabled_tools must contain non-empty tool names")
+        if len(normalized) != len(set(normalized)):
+            raise ValueError("agent.enabled_tools must not contain duplicates")
+        return normalized
 
 
 class InfoPacketLink(BaseModel):

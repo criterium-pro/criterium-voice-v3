@@ -1,4 +1,5 @@
-from receptionist.config import BusinessConfig
+from receptionist.config import BusinessConfig, load_config
+from pathlib import Path
 from receptionist.prompts import build_system_prompt
 
 
@@ -45,6 +46,16 @@ def _make_config():
 def test_prompt_contains_business_name():
     prompt = build_system_prompt(_make_config())
     assert "Test Dental" in prompt
+
+
+def test_innotec_compact_prompt_stays_below_latency_budget():
+    config = load_config(Path("config/businesses/example-innotec-es.yaml"))
+    prompt = build_system_prompt(config)
+    assert len(prompt) < 3200
+    assert "InnoTec Food Equipment" in prompt
+    assert "25-45 words" in prompt
+    assert "buenas noches" in prompt
+    assert "FREQUENTLY ASKED QUESTIONS" not in prompt
 
 
 def test_prompt_contains_personality():

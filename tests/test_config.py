@@ -97,9 +97,20 @@ def test_example_innotec_es_config_loads_as_spanish_realtime_v3():
     assert config.voice.voice_id == "shimmer"
     assert config.voice.model == "gpt-realtime-2.1"
     assert config.voice.reasoning_effort == "low"
+    assert config.voice.max_response_output_tokens == 480
     assert config.voice.turn_detection is not None
-    assert config.voice.turn_detection.type == "semantic_vad"
-    assert config.voice.turn_detection.eagerness == "high"
+    assert config.voice.turn_detection.type == "server_vad"
+    assert config.voice.turn_detection.threshold == 0.65
+    assert config.voice.turn_detection.prefix_padding_ms == 200
+    assert config.voice.turn_detection.silence_duration_ms == 300
+    assert config.agent.prompt_mode == "compact"
+    assert config.agent.enabled_tools == [
+        "lookup_faq",
+        "get_business_hours",
+        "take_message",
+        "transfer_call",
+        "end_call",
+    ]
     assert config.recording is not None
     assert config.recording.enabled is False
     assert config.transcripts is not None

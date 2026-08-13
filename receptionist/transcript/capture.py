@@ -70,8 +70,24 @@ class TranscriptCapture:
         try:
             item = event.item
             role = getattr(item, "role", None)
+            if role != "assistant":
+                return
+            # Realtime audio replies carry their text on AudioContent.transcript
+            # rather than ChatMessage.text_content.  Capture metrics even if a
+            # provider returns no transcript so observability never depends on
+            # whether the response modality happened to include text.
+            self._capture_latency(item, event.created_at)
             text = getattr(item, "text_content", None) or getattr(item, "text", None)
-            if role != "assistant" or not text:
+            if not text:
+                parts = getattr(item, "content", None) or []
+                transcripts = [
+                    str(value).strip()
+                    for part in parts
+                    if (value := getattr(part, "transcript", None))
+                    and str(value).strip()
+                ]
+                text = "\n".join(transcripts)
+            if not text:
                 return
             self.segments.append(TranscriptSegment(
                 role=SpeakerRole.ASSISTANT,
@@ -79,7 +95,6 @@ class TranscriptCapture:
                 created_at=event.created_at,
             ))
             self._trim_segments()
-            self._capture_latency(item, event.created_at)
         except Exception:
             logger.exception("TranscriptCapture: error handling conversation_item_added")
 

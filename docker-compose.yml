@@ -14,6 +14,8 @@ services:
     environment:
       RECEPTIONIST_AGENT_NAME: innotec-v3
       RECEPTIONIST_CONFIG: example-innotec-es
+    group_add:
+      - "${V3_RUNTIME_GID:-1000}"
     volumes:
       - ./runtime/messages:/app/messages
       - ./runtime/transcripts:/app/transcripts
