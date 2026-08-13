@@ -1,7 +1,28 @@
 # tests/transcript/test_metadata.py
 from __future__ import annotations
 
-from receptionist.transcript.metadata import CallMetadata, VALID_OUTCOMES
+from receptionist.transcript.metadata import (
+    CallMetadata,
+    LatencyTurnRecord,
+    VALID_OUTCOMES,
+)
+
+
+def test_latency_summary_reports_p50_p95_max_and_target_rate():
+    md = CallMetadata(call_id="room-latency", business_name="InnoTec")
+    for index, value in enumerate([320.0, 480.0, 510.0, 900.0]):
+        md.latency_turns.append(LatencyTurnRecord(timestamp=float(index), e2e_ms=value))
+
+    latency = md.to_dict()["latency"]
+    assert latency["summary"] == {
+        "target_ms": 500,
+        "measured_turns": 4,
+        "p50_ms": 480.0,
+        "p95_ms": 900.0,
+        "max_ms": 900.0,
+        "under_target_percent": 50.0,
+    }
+    assert latency["turns"][2]["under_500ms"] is False
 
 
 def test_metadata_defaults():
