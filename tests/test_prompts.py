@@ -53,7 +53,8 @@ def test_innotec_compact_prompt_stays_below_latency_budget():
     prompt = build_system_prompt(config)
     assert len(prompt) < 3200
     assert "InnoTec Food Equipment" in prompt
-    assert "25-45 words" in prompt
+    assert "20-30 words" in prompt
+    assert "máximo de 30 palabras" in prompt
     assert "buenas noches" in prompt
     assert "FREQUENTLY ASKED QUESTIONS" not in prompt
 
